@@ -4,33 +4,77 @@ import plotly.express as px
 import plotly.graph_objects as go
 import re
 import unicodedata
+import hmac
 import streamlit.components.v1 as components
 from streamlit_gsheets import GSheetsConnection
 
-# --- CONFIGURAÇÃO VISUAL (TEMA) ---
+# --- CONFIGURAÇÃO ---
 st.set_page_config(
     page_title="Portal Dash Cloud", 
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Inicializa estado de sincronização
+# --- SISTEMA DE LOGIN (CORRIGIDO) ---
+def check_password():
+    """Gerencia a autenticação segura."""
+    
+    def password_entered():
+        """Callback: Verifica a senha digitada."""
+        if hmac.compare_digest(st.session_state["password"], st.secrets["passwords"]["admin"]):
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # Limpa o campo de senha da memória
+        else:
+            st.session_state["password_correct"] = False
+
+    # Se a chave existe e é True, libera o acesso
+    if st.session_state.get("password_correct", False):
+        return True
+
+    # Layout da Tela de Login
+    st.markdown("""
+    <style>
+        .stTextInput { max-width: 400px; margin: 0 auto; }
+        .stButton { max-width: 400px; margin: 0 auto; display: block; }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.title("🔒 Portal Projuris - Acesso Restrito")
+    st.markdown("Por favor, autentique-se para visualizar os dados financeiros.")
+    
+    st.text_input("Senha de Acesso:", type="password", on_change=password_entered, key="password")
+    
+    # LÓGICA CORRIGIDA: Só mostra erro se a chave existir E for False
+    if "password_correct" in st.session_state and not st.session_state["password_correct"]:
+        st.error("❌ Senha incorreta. Verifique suas credenciais.")
+
+    return False
+
+if not check_password():
+    st.stop()
+
+# =========================================================
+#  ÁREA RESTRITA (LOGADA)
+# =========================================================
+
+# Abre a sidebar automaticamente após login
+if st.session_state.get("password_correct", False):
+    st.markdown("<script>document.getElementsByClassName('stSidebar')[0].style.display = 'block';</script>", unsafe_allow_html=True)
+
+# Inicializa estado
 if 'sync_count' not in st.session_state:
     st.session_state.sync_count = 0
 
-# --- LINKS ---
+# CONSTANTES
 URL_MAPEAMENTO = "https://docs.google.com/spreadsheets/d/1eP7EPmbaZg1brLwe0DeCD3EFzIyzn6z7yXOGzfvd-H8/edit?usp=sharing"
 URL_FINANCEIRO = "https://docs.google.com/spreadsheets/d/1s8xsAxURlMzZrD5Q9hyQP4lsx0hR6udRqmu7quyRiEs/edit?usp=sharing"
-
-# LINK ATUALIZADO (PÚBLICO)
 LINK_POWER_BI = "https://app.powerbi.com/view?r=eyJrIjoiMzM0YTg4NjEtZjkyNy00NGNkLTgwZmUtNzM0MDRmNGQ0MzcwIiwidCI6IjY1OWNlMmI4LTA3MTQtNDE5OC04YzM4LWRjOWI2MGFhYmI1NyJ9"
 
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-# --- CSS PROFISSIONAL ---
+# CSS
 st.markdown("""
     <style>
-    /* Estilo para os Cards de KPI */
     div[data-testid="metric-container"] {
         background-color: #F8F9FA;
         border: 1px solid #E9ECEF;
@@ -38,7 +82,6 @@ st.markdown("""
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    /* Ajuste para o Iframe do Power BI ocupar bem a tela */
     iframe {
         border-radius: 8px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -54,7 +97,7 @@ def buscar_dados_google(url, nome_log):
     except Exception:
         return pd.DataFrame()
 
-# --- FUNÇÕES MOTOR ---
+# FUNÇÕES MOTOR
 def limpar_valor(valor):
     if pd.isna(valor): return 0.0
     if isinstance(valor, (int, float)): return float(valor)
@@ -78,25 +121,27 @@ def gerar_sugestao(texto):
 # --- INTERFACE ---
 st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2920/2920323.png", width=40)
 st.sidebar.title("Navegação")
-# Reorganizei para o Power BI ser a primeira opção, já que é o foco visual
+
 pagina = st.sidebar.radio("Ir para:", ["Relatório Power BI", "Dashboard Executivo (Python)", "Auditoria de Dados"])
+
+# BOTÃO DE LOGOUT CORRIGIDO (Lógica de QA)
+if st.sidebar.button("🔒 Sair / Logout"):
+    # Remove as chaves de autenticação para resetar o estado para "Neutro"
+    if "password_correct" in st.session_state:
+        del st.session_state["password_correct"]
+    if "password" in st.session_state:
+        del st.session_state["password"]
+    st.rerun()
+
+# -------------------------------------
+# PÁGINAS DO SISTEMA
+# -------------------------------------
 
 if pagina == "Relatório Power BI":
     st.title("📊 RELATÓRIOS FRAME 2025")
-    # Uso de HTML direto para garantir responsividade (width=100%) e tela cheia
-    st.markdown(f'''
-        <iframe 
-            title="RELATORIOS FRAME 2025" 
-            width="100%" 
-            height="700" 
-            src="{LINK_POWER_BI}" 
-            frameborder="0" 
-            allowFullScreen="true">
-        </iframe>
-    ''', unsafe_allow_html=True)
+    st.markdown(f'<iframe title="Relatório Power BI" width="100%" height="700" src="{LINK_POWER_BI}" frameborder="0" allowFullScreen="true"></iframe>', unsafe_allow_html=True)
 
 elif pagina in ["Dashboard Executivo (Python)", "Auditoria de Dados"]:
-    # Botão Sincronizar na Sidebar
     if st.sidebar.button("🔄 Atualizar Dados"):
         st.cache_data.clear()
         st.session_state.sync_count += 1
@@ -107,7 +152,6 @@ elif pagina in ["Dashboard Executivo (Python)", "Auditoria de Dados"]:
     df_fin_bruto = buscar_dados_google(URL_FINANCEIRO, "Fin")
 
     if not df_fin_bruto.empty:
-        # PROCESSAMENTO
         df_map = df_map_bruto.copy()
         mapa_id = {}
         if not df_map.empty:
@@ -131,7 +175,6 @@ elif pagina in ["Dashboard Executivo (Python)", "Auditoria de Dados"]:
         
         df_dados['Turma_Padronizada'] = df_dados['Nº Controle 1'].apply(padronizar)
 
-        # --- PÁGINA 2: DASHBOARD EXECUTIVO (PYTHON) ---
         if pagina == "Dashboard Executivo (Python)":
             st.title("🚀 Visão Geral Financeira (Motor Interno)")
             
@@ -139,64 +182,42 @@ elif pagina in ["Dashboard Executivo (Python)", "Auditoria de Dados"]:
                 col_f1, col_f2 = st.columns([1, 3])
                 turmas_unicas = sorted(df_dados['Turma_Padronizada'].unique())
                 
-                with col_f1:
-                    ver_todas = st.toggle("Selecionar Todas as Turmas", value=False)
-                
+                with col_f1: ver_todas = st.toggle("Selecionar Todas as Turmas", value=False)
                 with col_f2:
-                    if ver_todas:
-                        st.info(f"📊 Visualizando todas as {len(turmas_unicas)} turmas.")
-                        selecao = turmas_unicas
-                    else:
-                        selecao = st.multiselect(
-                            "Selecione as Turmas:", 
-                            options=turmas_unicas,
-                            default=turmas_unicas[:5] if len(turmas_unicas) > 5 else turmas_unicas,
-                            key=f"filtro_pro_{st.session_state.sync_count}"
-                        )
+                    selecao = turmas_unicas if ver_todas else st.multiselect("Selecione as Turmas:", turmas_unicas, default=turmas_unicas[:5], key=f"filtro_{st.session_state.sync_count}")
 
             df_filtrado = df_dados[df_dados['Turma_Padronizada'].isin(selecao)] if selecao else df_dados.head(0)
-
+            
             if not df_filtrado.empty:
-                rec = df_filtrado['Recebido'].sum()
-                pag = df_filtrado['Pago'].sum()
+                rec, pag = df_filtrado['Recebido'].sum(), df_filtrado['Pago'].sum()
                 lucro = rec - pag
                 roi = (lucro / pag * 100) if pag > 0 else 0
-                
                 st.divider()
-                kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-                kpi1.metric("Receita Total", f"R$ {rec:,.2f}", delta="Faturamento")
-                kpi2.metric("Despesa Total", f"R$ {pag:,.2f}", delta="Custo", delta_color="inverse")
-                kpi3.metric("Lucro Líquido", f"R$ {lucro:,.2f}", delta="Margem")
-                kpi4.metric("ROI Geral", f"{roi:.1f}%", delta="Retorno")
+                k1, k2, k3, k4 = st.columns(4)
+                k1.metric("Receita", f"R$ {rec:,.2f}", delta="Faturamento")
+                k2.metric("Despesa", f"R$ {pag:,.2f}", delta="Custo", delta_color="inverse")
+                k3.metric("Lucro", f"R$ {lucro:,.2f}", delta="Margem")
+                k4.metric("ROI", f"{roi:.1f}%", delta="Retorno")
                 
                 g1, g2 = st.columns([2, 1])
                 with g1:
-                    resumo_barras = df_filtrado.groupby('Turma_Padronizada')['Recebido'].sum().reset_index().sort_values('Recebido', ascending=True)
-                    fig_bar = px.bar(
-                        resumo_barras, x='Recebido', y='Turma_Padronizada', orientation='h',
-                        text_auto='.2s', title="Ranking de Faturamento", color='Recebido', color_continuous_scale='Blues'
-                    )
-                    fig_bar.update_layout(xaxis_title="", yaxis_title="", height=450)
-                    st.plotly_chart(fig_bar, use_container_width=True)
-
+                    fig = px.bar(df_filtrado.groupby('Turma_Padronizada')['Recebido'].sum().reset_index().sort_values('Recebido'), x='Recebido', y='Turma_Padronizada', orientation='h', text_auto='.2s', title="Ranking", color='Recebido')
+                    st.plotly_chart(fig, use_container_width=True)
                 with g2:
                     st.subheader("🏆 Top Lucratividade")
-                    df_top = df_filtrado.groupby('Turma_Padronizada')[['Recebido', 'Pago']].sum().reset_index()
-                    df_top['Lucro'] = df_top['Recebido'] - df_top['Pago']
-                    st.dataframe(df_top.nlargest(10, 'Lucro')[['Turma_Padronizada', 'Lucro']], use_container_width=True, hide_index=True)
-            else:
-                st.warning("Nenhuma turma selecionada.")
+                    top = df_filtrado.groupby('Turma_Padronizada')[['Recebido','Pago']].sum().reset_index()
+                    top['Lucro'] = top['Recebido'] - top['Pago']
+                    st.dataframe(top.nlargest(10, 'Lucro')[['Turma_Padronizada','Lucro']], use_container_width=True, hide_index=True)
+            else: st.warning("Selecione uma turma.")
 
-        # --- PÁGINA 3: AUDITORIA ---
         elif pagina == "Auditoria de Dados":
             st.title("📋 Auditoria de Qualidade")
-            tab1, tab2 = st.tabs(["Base Completa", "Padrões Novos"])
-            with tab1: st.dataframe(df_dados, use_container_width=True)
-            with tab2:
+            t1, t2 = st.tabs(["Base Completa", "Padrões Novos"])
+            with t1: st.dataframe(df_dados, use_container_width=True)
+            with t2:
                 if mapa_id:
                     novos = df_dados[~df_dados['Turma_Padronizada'].isin(mapa_id.values())]
                     if not novos.empty: st.dataframe(novos[['Nº Controle 1', 'Turma_Padronizada']].drop_duplicates(), hide_index=True)
                     else: st.success("Sem novos padrões.")
-
     else:
-        st.info("Aguardando conexão com Google Sheets...")
+        st.info("Conectando ao Google Sheets...")
