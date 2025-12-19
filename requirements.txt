@@ -1,0 +1,7 @@
+streamlit
+pandas
+plotly
+rapidfuzz
+xlsxwriter
+st-gsheets-connection
+pytest
