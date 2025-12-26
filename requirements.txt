@@ -5,3 +5,4 @@ rapidfuzz
 xlsxwriter
 st-gsheets-connection
 pytest
+streamlit_option_menu
