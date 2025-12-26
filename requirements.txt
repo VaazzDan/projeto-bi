@@ -1,8 +1,5 @@
 streamlit
 pandas
 plotly
-rapidfuzz
-xlsxwriter
-st-gsheets-connection
-pytest
-streamlit_option_menu
+streamlit-option-menu
+streamlit-gsheets
