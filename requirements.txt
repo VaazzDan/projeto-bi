@@ -2,4 +2,4 @@ streamlit
 pandas
 plotly
 streamlit-option-menu
-streamlit-gsheets
+st-gsheets-connection

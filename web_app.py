@@ -9,7 +9,7 @@ from streamlit_option_menu import option_menu
 
 # --- 1. CONFIGURAÇÃO GERAL ---
 st.set_page_config(
-    page_title="Dashboard Corporativo",
+    page_title="Ohana Soluções Empresariais",
     layout="wide",
     initial_sidebar_state="expanded",
     page_icon="📊"
@@ -178,7 +178,7 @@ def check_auth():
             st.markdown(f"""<div style="background-color: {COR_CARD}; padding: 40px; border-radius: 20px; border-top: 5px solid {COR_PRIMARIA}; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">""", unsafe_allow_html=True)
             try: st.image(URL_LOGO_LOGIN, width=320) 
             except: st.markdown(f"<h1 style='color: {COR_PRIMARIA};'>OHANA</h1>", unsafe_allow_html=True)
-            st.markdown(f"""<p style="color: {COR_SUBTEXTO}; letter-spacing: 3px; font-size:12px; font-weight:700; margin-top: 20px;">SOLUÇÕES EMPRESARIAIS</p>""", unsafe_allow_html=True)
+            st.markdown(f"""<p style="color: {COR_SUBTEXTO}; letter-spacing: 3px; font-size:12px; font-weight:700; margin-top: 20px;"></p>""", unsafe_allow_html=True)
             st.markdown("<br>", unsafe_allow_html=True)
             st.text_input("Senha", type="password", on_change=password_entered, key="password", label_visibility="collapsed", placeholder="Digite a senha...")
             if "password_correct" in st.session_state and not st.session_state["password_correct"]: st.error("Acesso Negado.")
@@ -264,7 +264,7 @@ if selected == "Dashboard":
     st.markdown(f"""
     <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
         {ICONS['rocket']}
-        <h1 style="margin: 0; font-size: 32px;">Visão Executiva</h1>
+        <h1 style="margin: 0; font-size: 32px;">Dashboard</h1>
     </div>
     """, unsafe_allow_html=True)
 
