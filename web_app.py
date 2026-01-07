@@ -144,6 +144,7 @@ def load_data():
     return df_map, df_fin
 
 def process_data(df_map, df_fin):
+    # Dicionário definido corretamente aqui como mapa_id
     mapa_id = {}
     
     # Processa Mapeamento
@@ -162,21 +163,18 @@ def process_data(df_map, df_fin):
             try:
                 if pd.isna(v) or str(v).strip() == '': return 0.0
                 if isinstance(v, (int, float)): return float(v)
-                # Remove R$, espaços e ajusta vírgula/ponto
                 s = str(v).replace('R$', '').replace(' ', '')
                 if ',' in s and '.' not in s: s = s.replace(',', '.')
                 elif '.' in s and ',' in s: s = s.replace('.', '').replace(',', '.')
                 return float(s)
             except: return 0.0
             
-        # Garante que temos a coluna de valor limpa
         col_valor_original = 'Valor' if 'Valor' in df_fin.columns else df_fin.columns[0]
         df_fin['Valor_Clean'] = df_fin[col_valor_original].apply(clean_val)
 
-        # Classificação baseada na coluna 'TIPO' (Recebido / Pago)
+        # Classificação Recebido/Pago
         def classificar(row):
             rec, desp = 0.0, 0.0
-            # Busca coluna TIPO com flexibilidade de nome (maiúsculo/minúsculo)
             col_tipo = next((c for c in df_fin.columns if c.upper() == 'TIPO'), None)
             tipo = str(row[col_tipo]).lower() if col_tipo else ''
             
@@ -186,7 +184,6 @@ def process_data(df_map, df_fin):
                 rec = val
             elif 'pago' in tipo:
                 desp = abs(val)
-            # Fallback se TIPO não existir ou for vazio (tenta deduzir)
             elif val > 0: rec = val 
             else: desp = abs(val)
             
@@ -196,19 +193,18 @@ def process_data(df_map, df_fin):
         
         # Padronização de Turma
         def get_turma(val):
-            # Tenta pegar ID numérico no início
             match = re.search(r'^\d+', str(val).strip())
             if match:
                 turma_id = match.group(0)
-                # Usa o dicionário do mapeamento
+                # Usa mapa_id (a variável local correta)
                 return mapa_id.get(turma_id, re.sub(r'\s+\d+[\d\s.]*$', '', str(val).strip()).upper())
             return "NÃO INFORMADO"
             
-        # Busca coluna de controle (Nº Controle 1 ou similar)
         col_controle = next((c for c in df_fin.columns if 'CONTROLE' in c.upper()), df_fin.columns[0])
         df_fin['Turma_Padronizada'] = df_fin[col_controle].apply(get_turma)
         
-    return df_fin, df_map, mapa_dict
+    # CORREÇÃO: Retorna mapa_id (variável local), não mapa_dict (que não existe aqui)
+    return df_fin, df_map, mapa_id 
 
 raw_map, raw_fin = load_data()
 df_dados, df_map, mapa_dict = process_data(raw_map, raw_fin)
