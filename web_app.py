@@ -32,7 +32,7 @@ COR_TEXTO = "#FFFFFF"
 COR_SUBTEXTO = "#B0B8C8"
 URL_LOGO_LOGIN = "https://i.ibb.co/hJV9NNmX/backgroud-png.png"
 
-# --- 4. ÍCONES SVG (Adicionado 'filter' que faltava) ---
+# --- 4. ÍCONES SVG ---
 ICONS = {
     "money": f"""<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="{COR_SECUNDARIA}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>""",
     "down": f"""<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="{COR_PRIMARIA}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>""",
@@ -44,102 +44,32 @@ ICONS = {
     "filter": f"""<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{COR_SUBTEXTO}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>"""
 }
 
-# --- 5. CSS REFINADO (CORREÇÃO DE CONFLITOS) ---
+# --- 5. CSS REFINADO ---
 def local_css():
     st.markdown(f"""
     <style>
-        /* 1. Fonte Global: Aplicada com cuidado para não quebrar ícones de sistema */
-        .stApp {{
-            background-color: {COR_FUNDO};
-            color: {COR_TEXTO};
-        }}
-        
-        /* Aplica Noto Sans apenas em elementos de TEXTO, excluindo botões de ícone */
-        h1, h2, h3, h4, h5, h6, p, span, div, label, input, button {{
-            font-family: 'Noto Sans', sans-serif;
-        }}
-        
-        /* 2. Correção do Menu Hambúrguer e Ícones do Sistema */
-        /* Garante que o botão de fechar/abrir sidebar use a fonte de ícone nativa */
-        [data-testid="stSidebarCollapsedControl"] button, 
-        [data-testid="stSidebarCollapsedControl"] span,
-        [data-testid="stSidebarNav"] i {{
-            font-family: sans-serif !important; /* Reseta fonte para padrão do sistema */
-        }}
-        
-        /* Colore o botão hambúrguer */
-        [data-testid="stSidebarCollapsedControl"] {{
-            color: {COR_PRIMARIA} !important;
-        }}
-
-        /* 3. Sidebar */
-        section[data-testid="stSidebar"] {{ 
-            background-color: {COR_SIDEBAR}; 
-            border-right: 1px solid rgba(235, 82, 131, 0.2); 
-        }}
+        .stApp {{ background-color: {COR_FUNDO}; color: {COR_TEXTO}; }}
+        h1, h2, h3, h4, h5, h6, p, span, div, label, input, button {{ font-family: 'Noto Sans', sans-serif; }}
+        [data-testid="stSidebarCollapsedControl"] button, [data-testid="stSidebarCollapsedControl"] span, [data-testid="stSidebarNav"] i {{ font-family: sans-serif !important; }}
+        [data-testid="stSidebarCollapsedControl"] {{ color: {COR_PRIMARIA} !important; }}
+        section[data-testid="stSidebar"] {{ background-color: {COR_SIDEBAR}; border-right: 1px solid rgba(235, 82, 131, 0.2); }}
         section[data-testid="stSidebar"] .block-container {{ padding-top: 2rem; padding-bottom: 1rem; }}
         section[data-testid="stSidebar"] > div::-webkit-scrollbar {{ display: none; }}
-        
-        /* Títulos */
         h1, h2, h3 {{ color: {COR_PRIMARIA} !important; font-weight: 700 !important; }}
-
-        /* 4. KPI Cards */
         .kpi-card {{
-            background-color: {COR_CARD};
-            padding: 24px;
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.05);
-            border-left: 6px solid {COR_PRIMARIA};
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            transition: all 0.3s ease;
+            background-color: {COR_CARD}; padding: 24px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);
+            border-left: 6px solid {COR_PRIMARIA}; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease;
         }}
-        .kpi-card:hover {{
-            transform: translateY(-5px);
-            border-color: {COR_SECUNDARIA};
-        }}
+        .kpi-card:hover {{ transform: translateY(-5px); border-color: {COR_SECUNDARIA}; }}
         .kpi-text-area {{ display: flex; flex-direction: column; }}
-        .kpi-title {{
-            color: {COR_SUBTEXTO};
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-        }}
-        .kpi-value {{
-            color: {COR_TEXTO};
-            font-size: 28px;
-            font-weight: 800;
-            line-height: 1;
-        }}
-        .kpi-sub {{
-            color: {COR_SECUNDARIA};
-            font-size: 11px;
-            margin-top: 5px;
-            font-weight: 600;
-        }}
-        .kpi-icon-box {{
-            background: rgba(36, 151, 191, 0.1);
-            padding: 12px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(36, 151, 191, 0.2);
-        }}
-
-        /* 5. Inputs e Tabelas */
+        .kpi-title {{ color: {COR_SUBTEXTO}; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }}
+        .kpi-value {{ color: {COR_TEXTO}; font-size: 28px; font-weight: 800; line-height: 1; }}
+        .kpi-sub {{ color: {COR_SECUNDARIA}; font-size: 11px; margin-top: 5px; font-weight: 600; }}
+        .kpi-icon-box {{ background: rgba(36, 151, 191, 0.1); padding: 12px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(36, 151, 191, 0.2); }}
         div[data-testid="stDataFrame"] {{ background-color: {COR_CARD}; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }}
         .stTextInput input {{ background-color: {COR_SIDEBAR} !important; color: white !important; border: 1px solid {COR_PRIMARIA} !important; }}
-        
-        /* 6. Limpeza Geral */
-        #MainMenu {{visibility: hidden;}}
-        footer {{visibility: hidden;}}
-        header {{background-color: transparent !important;}}
+        #MainMenu {{visibility: hidden;}} footer {{visibility: hidden;}} header {{background-color: transparent !important;}}
     </style>
     """, unsafe_allow_html=True)
 
@@ -186,53 +116,99 @@ def check_auth():
 
 if not check_auth(): st.stop()
 
-# --- 8. DADOS (ETL) ---
+# --- 8. DADOS (ETL CONECTADO AO GOOGLE SHEETS) ---
+# Link do Mapeamento
 URL_MAPEAMENTO = "https://docs.google.com/spreadsheets/d/1eP7EPmbaZg1brLwe0DeCD3EFzIyzn6z7yXOGzfvd-H8/edit?usp=sharing"
-URL_FINANCEIRO = "https://docs.google.com/spreadsheets/d/1s8xsAxURlMzZrD5Q9hyQP4lsx0hR6udRqmu7quyRiEs/edit?usp=sharing"
+# Link da Planilha Financeira (Novo Link Fornecido)
+URL_FINANCEIRO = "https://docs.google.com/spreadsheets/d/1xhdYFEyl0t5H-928RdGX7je9xiwfEGDaaHIBALAzY60/edit?usp=sharing"
 LINK_POWER_BI = "https://app.powerbi.com/reportEmbed?reportId=31c41b07-b8ce-4fc1-9396-0a6cc516c92d&autoAuth=true&ctid=1d90d210-ebe4-4b83-be2c-cdddc540416f"
 
+# Conexão GSheets Universal
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 @st.cache_data(ttl=300)
 def load_data():
-    try: return conn.read(spreadsheet=URL_MAPEAMENTO), conn.read(spreadsheet=URL_FINANCEIRO)
-    except: return pd.DataFrame(), pd.DataFrame()
+    # 1. Carrega Mapeamento
+    try:
+        df_map = conn.read(spreadsheet=URL_MAPEAMENTO)
+    except:
+        df_map = pd.DataFrame()
+    
+    # 2. Carrega Financeiro (Agora via Link do Google Sheets)
+    try:
+        df_fin = conn.read(spreadsheet=URL_FINANCEIRO)
+    except Exception as e:
+        st.error(f"Erro ao ler Planilha Financeira: {e}")
+        df_fin = pd.DataFrame()
+        
+    return df_map, df_fin
 
 def process_data(df_map, df_fin):
     mapa_id = {}
+    
+    # Processa Mapeamento
     if not df_map.empty:
         df_map.columns = [str(c).strip().capitalize() for c in df_map.columns]
         for _, row in df_map.dropna(subset=['Para']).iterrows():
             match = re.search(r'^\d+', str(row.get('De', '')))
             if match: mapa_id[match.group(0)] = str(row['Para']).upper()
 
+    # Processa Financeiro
     if not df_fin.empty:
         df_fin.columns = [str(c).strip() for c in df_fin.columns]
+        
+        # Limpeza de Valor (Tratamento robusto para números e strings)
         def clean_val(v):
             try:
+                if pd.isna(v) or str(v).strip() == '': return 0.0
+                if isinstance(v, (int, float)): return float(v)
+                # Remove R$, espaços e ajusta vírgula/ponto
                 s = str(v).replace('R$', '').replace(' ', '')
                 if ',' in s and '.' not in s: s = s.replace(',', '.')
                 elif '.' in s and ',' in s: s = s.replace('.', '').replace(',', '.')
                 return float(s)
             except: return 0.0
-        for c in ['Valor', 'Recebido', 'Pago']:
-            if c in df_fin.columns: df_fin[f'{c}_Clean'] = df_fin[c].apply(clean_val)
-            else: df_fin[f'{c}_Clean'] = 0.0
+            
+        # Garante que temos a coluna de valor limpa
+        col_valor_original = 'Valor' if 'Valor' in df_fin.columns else df_fin.columns[0]
+        df_fin['Valor_Clean'] = df_fin[col_valor_original].apply(clean_val)
+
+        # Classificação baseada na coluna 'TIPO' (Recebido / Pago)
         def classificar(row):
             rec, desp = 0.0, 0.0
-            linha_txt = str(row.values).lower()
-            if row['Recebido_Clean'] > 0: rec = row['Recebido_Clean']
-            elif row['Pago_Clean'] != 0: desp = abs(row['Pago_Clean'])
-            elif 'recebido' in linha_txt: rec = max(row['Valor_Clean'], row['Recebido_Clean'], row['Pago_Clean'])
-            elif 'pago' in linha_txt: desp = abs(row['Valor_Clean'] if row['Valor_Clean'] != 0 else row['Pago_Clean'])
+            # Busca coluna TIPO com flexibilidade de nome (maiúsculo/minúsculo)
+            col_tipo = next((c for c in df_fin.columns if c.upper() == 'TIPO'), None)
+            tipo = str(row[col_tipo]).lower() if col_tipo else ''
+            
+            val = row.get('Valor_Clean', 0.0)
+            
+            if 'recebido' in tipo:
+                rec = val
+            elif 'pago' in tipo:
+                desp = abs(val)
+            # Fallback se TIPO não existir ou for vazio (tenta deduzir)
+            elif val > 0: rec = val 
+            else: desp = abs(val)
+            
             return pd.Series([rec, desp])
+            
         df_fin[['Receita_Real', 'Despesa_Real']] = df_fin.apply(classificar, axis=1)
+        
+        # Padronização de Turma
         def get_turma(val):
+            # Tenta pegar ID numérico no início
             match = re.search(r'^\d+', str(val).strip())
-            return mapa_id.get(match.group(0), re.sub(r'\s+\d+[\d\s.]*$', '', str(val).strip()).upper()) if match else "NÃO INFORMADO"
-        col = 'Nº Controle 1' if 'Nº Controle 1' in df_fin.columns else df_fin.columns[0]
-        df_fin['Turma_Padronizada'] = df_fin[col].apply(get_turma)
-    return df_fin, df_map, mapa_id
+            if match:
+                turma_id = match.group(0)
+                # Usa o dicionário do mapeamento
+                return mapa_id.get(turma_id, re.sub(r'\s+\d+[\d\s.]*$', '', str(val).strip()).upper())
+            return "NÃO INFORMADO"
+            
+        # Busca coluna de controle (Nº Controle 1 ou similar)
+        col_controle = next((c for c in df_fin.columns if 'CONTROLE' in c.upper()), df_fin.columns[0])
+        df_fin['Turma_Padronizada'] = df_fin[col_controle].apply(get_turma)
+        
+    return df_fin, df_map, mapa_dict
 
 raw_map, raw_fin = load_data()
 df_dados, df_map, mapa_dict = process_data(raw_map, raw_fin)
@@ -288,7 +264,6 @@ if selected == "Dashboard":
             
             if mode == "Seleção":
                 padrao = turmas_disponiveis[:3] if len(turmas_disponiveis) >= 3 else turmas_disponiveis
-                # O label aqui pode ser oculto pois já temos um cabeçalho visual acima
                 sel = c2.multiselect("Selecione:", turmas_disponiveis, default=padrao, label_visibility="collapsed")
                 if sel: df_f = df_dados[df_dados['Turma_Padronizada'].astype(str).isin(sel)]
                 else:
@@ -326,7 +301,7 @@ if selected == "Dashboard":
                 st.markdown(f"""<div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">{ICONS['profit']} <h3>Ranking</h3></div>""", unsafe_allow_html=True)
                 top = df_f.groupby('Turma_Padronizada')[['Receita_Real', 'Despesa_Real']].sum().reset_index()
                 top['Lucro'] = top['Receita_Real'] - top['Despesa_Real']
-                st.dataframe(top.nlargest(10, 'Lucro')[['Turma_Padronizada', 'Lucro']], use_container_width=True, hide_index=True, height=450, column_config={"Turma_Padronizada": st.column_config.TextColumn("Turma"), "Lucro": st.column_config.ProgressColumn("Lucro", format="R$ %.0f", min_value=0, max_value=float(top['Lucro'].max()))})
+                st.dataframe(top.nlargest(10, 'Lucro')[['Turma_Padronizada', 'Lucro']], use_container_width=True, hide_index=True, height=450, column_config={"Turma_Padronizada": st.column_config.TextColumn("Turma"), "Lucro": st.column_config.ProgressColumn("Lucro", format="R$ %.0f", min_value=0, max_value=float(top['Lucro'].max()) if not top.empty else 100)})
 
 elif selected == "Power BI":
     st.markdown(f"""<h3>Relatório Power BI</h3>""", unsafe_allow_html=True)
@@ -345,12 +320,16 @@ elif selected == "Mapeamento":
 elif selected == "Auditoria":
     st.markdown(f"""<h3>Auditoria</h3>""", unsafe_allow_html=True)
     if not df_dados.empty and 'Turma_Padronizada' in df_dados.columns:
-        err = df_dados[~df_dados['Turma_Padronizada'].isin(mapa_dict.values())]
+        if mapa_dict:
+            err = df_dados[~df_dados['Turma_Padronizada'].isin(mapa_dict.values())]
+        else:
+            err = pd.DataFrame() 
+            
         c1, c2 = st.columns(2)
         total = len(df_dados)
-        qualidade = (1 - len(err)/total)*100 if total > 0 else 0
+        qualidade = (1 - len(err)/total)*100 if total > 0 else 100
         with c1: st.markdown(kpi_html("Pendentes", f"{len(err)}", "Itens não mapeados", ICONS['alert']), unsafe_allow_html=True)
         with c2: st.markdown(kpi_html("Qualidade", f"{qualidade:.1f}%", "Dados Confiáveis", ICONS['check']), unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
         if not err.empty: st.dataframe(err.iloc[:, :5], use_container_width=True)
-        else: st.success("100% dos dados estão mapeados.")
+        elif total > 0: st.success("100% dos dados estão mapeados ou mapa vazio.")
