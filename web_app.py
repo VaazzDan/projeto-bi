@@ -117,26 +117,18 @@ def check_auth():
 if not check_auth(): st.stop()
 
 # --- 8. DADOS (ETL CONECTADO AO GOOGLE SHEETS) ---
-# Link do Mapeamento
 URL_MAPEAMENTO = "https://docs.google.com/spreadsheets/d/1eP7EPmbaZg1brLwe0DeCD3EFzIyzn6z7yXOGzfvd-H8/edit?usp=sharing"
-# Link da Planilha Financeira (Novo Link Fornecido)
 URL_FINANCEIRO = "https://docs.google.com/spreadsheets/d/1xhdYFEyl0t5H-928RdGX7je9xiwfEGDaaHIBALAzY60/edit?usp=sharing"
 LINK_POWER_BI = "https://app.powerbi.com/reportEmbed?reportId=31c41b07-b8ce-4fc1-9396-0a6cc516c92d&autoAuth=true&ctid=1d90d210-ebe4-4b83-be2c-cdddc540416f"
 
-# Conexão GSheets Universal
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 @st.cache_data(ttl=300)
 def load_data():
-    # 1. Carrega Mapeamento
-    try:
-        df_map = conn.read(spreadsheet=URL_MAPEAMENTO)
-    except:
-        df_map = pd.DataFrame()
+    try: df_map = conn.read(spreadsheet=URL_MAPEAMENTO)
+    except: df_map = pd.DataFrame()
     
-    # 2. Carrega Financeiro (Agora via Link do Google Sheets)
-    try:
-        df_fin = conn.read(spreadsheet=URL_FINANCEIRO)
+    try: df_fin = conn.read(spreadsheet=URL_FINANCEIRO)
     except Exception as e:
         st.error(f"Erro ao ler Planilha Financeira: {e}")
         df_fin = pd.DataFrame()
@@ -144,7 +136,6 @@ def load_data():
     return df_map, df_fin
 
 def process_data(df_map, df_fin):
-    # Dicionário definido corretamente aqui como mapa_id
     mapa_id = {}
     
     # Processa Mapeamento
@@ -158,7 +149,7 @@ def process_data(df_map, df_fin):
     if not df_fin.empty:
         df_fin.columns = [str(c).strip() for c in df_fin.columns]
         
-        # Limpeza de Valor (Tratamento robusto para números e strings)
+        # 1. Limpeza de Valor
         def clean_val(v):
             try:
                 if pd.isna(v) or str(v).strip() == '': return 0.0
@@ -172,38 +163,43 @@ def process_data(df_map, df_fin):
         col_valor_original = 'Valor' if 'Valor' in df_fin.columns else df_fin.columns[0]
         df_fin['Valor_Clean'] = df_fin[col_valor_original].apply(clean_val)
 
-        # Classificação Recebido/Pago
+        # 2. Classificação Recebido/Pago
         def classificar(row):
             rec, desp = 0.0, 0.0
             col_tipo = next((c for c in df_fin.columns if c.upper() == 'TIPO'), None)
             tipo = str(row[col_tipo]).lower() if col_tipo else ''
-            
             val = row.get('Valor_Clean', 0.0)
             
-            if 'recebido' in tipo:
-                rec = val
-            elif 'pago' in tipo:
-                desp = abs(val)
+            if 'recebido' in tipo: rec = val
+            elif 'pago' in tipo: desp = abs(val)
             elif val > 0: rec = val 
             else: desp = abs(val)
-            
             return pd.Series([rec, desp])
             
         df_fin[['Receita_Real', 'Despesa_Real']] = df_fin.apply(classificar, axis=1)
         
-        # Padronização de Turma
-        def get_turma(val):
-            match = re.search(r'^\d+', str(val).strip())
-            if match:
-                turma_id = match.group(0)
-                # Usa mapa_id (a variável local correta)
-                return mapa_id.get(turma_id, re.sub(r'\s+\d+[\d\s.]*$', '', str(val).strip()).upper())
-            return "NÃO INFORMADO"
-            
-        col_controle = next((c for c in df_fin.columns if 'CONTROLE' in c.upper()), df_fin.columns[0])
-        df_fin['Turma_Padronizada'] = df_fin[col_controle].apply(get_turma)
+        # 3. TURMA: Prioriza a coluna 'NºControle_padronizado' se existir
+        # Normaliza nomes de colunas para encontrar independente de maiúsc/minusc/espaços
+        cols_normalizadas = {c.upper().replace('_', '').replace(' ', ''): c for c in df_fin.columns}
+        chave_alvo = "NºCONTROLEPADRONIZADO"
         
-    # CORREÇÃO: Retorna mapa_id (variável local), não mapa_dict (que não existe aqui)
+        if chave_alvo in cols_normalizadas:
+            col_real = cols_normalizadas[chave_alvo]
+            # Usa a coluna que já está pronta na planilha
+            df_fin['Turma_Padronizada'] = df_fin[col_real].astype(str).str.strip().str.upper()
+            df_fin['Turma_Padronizada'] = df_fin['Turma_Padronizada'].replace(['NAN', 'NONE', ''], 'NÃO INFORMADO')
+        else:
+            # Fallback: Tenta calcular se a coluna não existir
+            def get_turma(val):
+                match = re.search(r'^\d+', str(val).strip())
+                if match:
+                    turma_id = match.group(0)
+                    return mapa_id.get(turma_id, re.sub(r'\s+\d+[\d\s.]*$', '', str(val).strip()).upper())
+                return "NÃO INFORMADO"
+            
+            col_controle = next((c for c in df_fin.columns if 'CONTROLE' in c.upper()), df_fin.columns[0])
+            df_fin['Turma_Padronizada'] = df_fin[col_controle].apply(get_turma)
+        
     return df_fin, df_map, mapa_id 
 
 raw_map, raw_fin = load_data()
@@ -256,7 +252,8 @@ if selected == "Dashboard":
             mode = c1.radio("Modo", ["Todas", "Seleção"], horizontal=True)
             turmas_disponiveis = []
             if 'Turma_Padronizada' in df_dados.columns:
-                turmas_disponiveis = sorted(df_dados['Turma_Padronizada'].astype(str).unique())
+                # Remove NaN e ordena
+                turmas_disponiveis = sorted([t for t in df_dados['Turma_Padronizada'].unique() if str(t) != 'nan'])
             
             if mode == "Seleção":
                 padrao = turmas_disponiveis[:3] if len(turmas_disponiveis) >= 3 else turmas_disponiveis
