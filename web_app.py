@@ -26,6 +26,7 @@ COR_PRIMARIA = "#EB5283"
 COR_SECUNDARIA = "#2497BF"
 COR_TEXTO = "#FFFFFF"
 COR_SUBTEXTO = "#B0B8C8"
+COR_ALERT = "#ef4444"  # Vermelho para alertas/não mapeado
 
 # --- ÍCONES ---
 ICONS = {
@@ -107,7 +108,7 @@ def check_auth():
 if not check_auth(): st.stop()
 
 # ==============================================================================
-# 3. ETL (BUSCA PRIORITÁRIA PELO PADRONIZADO)
+# 3. ETL (COM AUDITORIA DE DADOS)
 # ==============================================================================
 @st.cache_data(ttl=600)
 def load_data():
@@ -115,6 +116,8 @@ def load_data():
     url = f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=xlsx'
     
     logs = []
+    # Dicionário para guardar estatísticas de qualidade
+    audit_stats = {'mapped': 0.0, 'unmapped': 0.0}
     
     try:
         all_sheets = pd.read_excel(url, sheet_name=None, engine='openpyxl')
@@ -141,14 +144,10 @@ def load_data():
                 tipo_lancamento = 'DESPESA'
             
             if tipo_lancamento:
-                # --- BUSCA DE COLUNAS (CORRIGIDA) ---
                 col_valor = next((c for c in df.columns if c == 'VALOR'), None) or \
                             next((c for c in df.columns if 'VALOR' in c), None)
 
-                # Prioridade MAXIMA: Busca "CONTROLE" e "PADRONIZADO" juntos
                 col_curso = next((c for c in df.columns if "CONTROLE" in c and "PADRONIZADO" in c), None)
-                
-                # Fallback: Se não achar o padronizado, tenta só controle ou curso
                 if not col_curso:
                     col_curso = next((c for c in df.columns if "CONTROLE" in c), None) or \
                                 next((c for c in df.columns if "CURSO" in c), None)
@@ -159,7 +158,7 @@ def load_data():
                 if col_valor and col_curso:
                     df_subset = df.copy()
                     
-                    # --- FILTRO CRÍTICO GLOBAL ---
+                    # 1. Normalização do Curso
                     df_subset['TEMP_CURSO'] = (
                         df_subset[col_curso]
                         .fillna('')
@@ -169,11 +168,23 @@ def load_data():
                         .str.replace(r'\.0$', '', regex=True)
                     )
                     
+                    # 2. Limpeza de Valores para cálculo de auditoria
+                    raw_values_clean = limpar_valor(df_subset[col_valor]).abs()
+                    
+                    # 3. Identificação de Inválidos
                     valores_invalidos = ['', 'NAN', 'NAT', 'NONE', 'NULL', '0', 'N/A', '-', 'nan']
-                    df_subset = df_subset[~df_subset['TEMP_CURSO'].isin(valores_invalidos)]
+                    mask_invalid = df_subset['TEMP_CURSO'].isin(valores_invalidos)
+                    
+                    # --- CÁLCULO DE AUDITORIA (NOVA FEATURE) ---
+                    # Soma valores descartados vs aceitos
+                    audit_stats['unmapped'] += raw_values_clean[mask_invalid].sum()
+                    audit_stats['mapped'] += raw_values_clean[~mask_invalid].sum()
+                    
+                    # 4. Aplica o filtro GLOBAL (Descarta inválidos do DataFrame final)
+                    df_subset = df_subset[~mask_invalid]
                     
                     if df_subset.empty:
-                        logs.append(f"⚠️ Aba '{sheet_name}' ignorada: Registros sem 'Nº Controle' válido ({col_curso}).")
+                        logs.append(f"⚠️ Aba '{sheet_name}' ignorada: Registros sem 'Nº Controle' válido.")
                         continue
 
                     df_temp = pd.DataFrame()
@@ -190,12 +201,12 @@ def load_data():
                     df_temp['TIPO'] = tipo_lancamento
                     df_list.append(df_temp)
             
-        return (pd.concat(df_list, ignore_index=True) if df_list else pd.DataFrame()), logs
+        return (pd.concat(df_list, ignore_index=True) if df_list else pd.DataFrame()), logs, audit_stats
 
     except Exception as e:
-        return pd.DataFrame(), [f"Erro Crítico: {str(e)}"]
+        return pd.DataFrame(), [f"Erro Crítico: {str(e)}"], {'mapped': 0, 'unmapped': 0}
 
-df, debug_logs = load_data()
+df, debug_logs, audit_stats = load_data()
 
 # ==============================================================================
 # 4. SIDEBAR
@@ -252,6 +263,7 @@ if selected == "Dashboard":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # KPIS
     receita = df_final[df_final['TIPO'] == 'RECEITA']['VALOR'].sum()
     despesa = df_final[df_final['TIPO'] == 'DESPESA']['VALOR'].sum()
     lucro = receita - despesa
@@ -265,6 +277,7 @@ if selected == "Dashboard":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # GRÁFICOS
     df_chart = df_final.groupby(['CURSO', 'TIPO'])['VALOR'].sum().unstack(fill_value=0).reset_index()
     if 'RECEITA' not in df_chart.columns: df_chart['RECEITA'] = 0
     if 'DESPESA' not in df_chart.columns: df_chart['DESPESA'] = 0
@@ -294,8 +307,7 @@ if selected == "Dashboard":
                 font=dict(color=COR_SUBTEXTO),
                 xaxis=dict(showgrid=False, type='category'), 
                 yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-                legend=dict(orientation="h", y=1.1, x=0),
-                separators=",."
+                legend=dict(orientation="h", y=1.1, x=0), separators=",."
             )
             st.plotly_chart(fig, use_container_width=True)
 
@@ -310,12 +322,38 @@ if selected == "Dashboard":
             fig_rank.update_layout(
                 height=400, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                 font=dict(color=COR_SUBTEXTO), yaxis_title="Nº Controle", xaxis_title=None,
-                xaxis=dict(showgrid=False), yaxis=dict(type='category', title=None),
-                separators=",."
+                xaxis=dict(showgrid=False), yaxis=dict(type='category', title=None), separators=",."
             )
             st.plotly_chart(fig_rank, use_container_width=True)
 
-    with st.expander("Visualizar Dados em Tabela & Diagnóstico"):
+    # --- ÁREA DE AUDITORIA E DADOS ---
+    st.markdown("---")
+    
+    # Novo Gráfico de Auditoria (NOVO)
+    with st.expander("🔍 Auditoria de Qualidade de Dados (Valores sem Controle)", expanded=True):
+        ac1, ac2 = st.columns([1, 2])
+        
+        total_vol = audit_stats['mapped'] + audit_stats['unmapped']
+        pct_unmapped = (audit_stats['unmapped'] / total_vol * 100) if total_vol > 0 else 0
+        
+        with ac1:
+            st.markdown("### Resumo de Integridade")
+            st.metric("Volume Total Analisado", format_currency(total_vol))
+            st.metric("Volume Sem Controle (Ignorado)", format_currency(audit_stats['unmapped']), delta=f"{pct_unmapped:.1f}% do total", delta_color="inverse")
+            st.caption("*Valores sem 'Nº Controle' são removidos dos KPIs e Gráficos acima.")
+            
+        with ac2:
+            audit_df = pd.DataFrame({
+                'Status': ['Mapeado (Válido)', 'Não Mapeado (Sem Controle)'],
+                'Valor': [audit_stats['mapped'], audit_stats['unmapped']]
+            })
+            fig_audit = px.pie(audit_df, values='Valor', names='Status', hole=0.5, 
+                               color='Status', color_discrete_map={'Mapeado (Válido)': COR_SECUNDARIA, 'Não Mapeado (Sem Controle)': COR_ALERT})
+            fig_audit.update_traces(textinfo='percent+label')
+            fig_audit.update_layout(height=300, paper_bgcolor='rgba(0,0,0,0)', font=dict(color=COR_SUBTEXTO), margin=dict(t=0, b=0, l=0, r=0))
+            st.plotly_chart(fig_audit, use_container_width=True)
+
+    with st.expander("Visualizar Dados Detalhados (Tabela)"):
         st.dataframe(
             df_final[['DATA', 'CURSO', 'TIPO', 'VALOR']]
             .sort_values(['DATA', 'TIPO'], ascending=[False, True])
