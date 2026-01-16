@@ -18,6 +18,13 @@ st.set_page_config(
 
 LOGO_URL = "https://i.ibb.co/xZGzw7F/ohana.png"
 
+# --- CONSTANTES DE DATA (Mapeamento de Meses) ---
+MESES_DICT = {
+    1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril',
+    5: 'Maio', 6: 'Junho', 7: 'Julho', 8: 'Agosto',
+    9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
+}
+
 # --- CORES ---
 COR_FUNDO = "#0e1117"
 COR_SIDEBAR = "#161b24"
@@ -108,7 +115,7 @@ def check_auth():
 if not check_auth(): st.stop()
 
 # ==============================================================================
-# 3. ETL (COM AUDITORIA DETALHADA)
+# 3. ETL (COM MÊS E AUDITORIA)
 # ==============================================================================
 @st.cache_data(ttl=600)
 def load_data():
@@ -116,12 +123,7 @@ def load_data():
     url = f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=xlsx'
     
     logs = []
-    # Estrutura de auditoria separada
-    audit_stats = {
-        'mapped_total': 0.0,
-        'unmapped_receita': 0.0,
-        'unmapped_despesa': 0.0
-    }
+    audit_stats = {'mapped_total': 0.0, 'unmapped_receita': 0.0, 'unmapped_despesa': 0.0}
     
     try:
         all_sheets = pd.read_excel(url, sheet_name=None, engine='openpyxl')
@@ -151,7 +153,6 @@ def load_data():
                 col_valor = next((c for c in df.columns if c == 'VALOR'), None) or \
                             next((c for c in df.columns if 'VALOR' in c), None)
 
-                # Busca prioritária pelo Padronizado
                 col_curso = next((c for c in df.columns if "CONTROLE" in c and "PADRONIZADO" in c), None)
                 if not col_curso:
                     col_curso = next((c for c in df.columns if "CONTROLE" in c), None) or \
@@ -163,7 +164,6 @@ def load_data():
                 if col_valor and col_curso:
                     df_subset = df.copy()
                     
-                    # 1. Normalização
                     df_subset['TEMP_CURSO'] = (
                         df_subset[col_curso]
                         .fillna('')
@@ -173,25 +173,19 @@ def load_data():
                         .str.replace(r'\.0$', '', regex=True)
                     )
                     
-                    # 2. Identificação de Inválidos
                     valores_invalidos = ['', 'NAN', 'NAT', 'NONE', 'NULL', '0', 'N/A', '-', 'nan']
                     
-                    # Limpa valores monetários para cálculo
                     raw_values_clean = limpar_valor(df_subset[col_valor]).abs()
                     mask_invalid = df_subset['TEMP_CURSO'].isin(valores_invalidos)
                     
-                    # --- AUDITORIA DETALHADA ---
-                    # Soma o que foi perdido neste tipo de lançamento
                     valor_perdido = raw_values_clean[mask_invalid].sum()
                     if tipo_lancamento == 'RECEITA':
                         audit_stats['unmapped_receita'] += valor_perdido
                     else:
                         audit_stats['unmapped_despesa'] += valor_perdido
                         
-                    # Soma o que foi aceito
                     audit_stats['mapped_total'] += raw_values_clean[~mask_invalid].sum()
                     
-                    # 3. Filtro Efetivo para o Dashboard
                     df_subset = df_subset[~mask_invalid]
                     
                     if df_subset.empty:
@@ -205,9 +199,14 @@ def load_data():
                     if col_data:
                         df_temp['DATA'] = pd.to_datetime(df_subset[col_data], errors='coerce')
                         df_temp['ANO'] = df_temp['DATA'].dt.year
+                        # --- CRIAÇÃO DA COLUNA DE MÊS ---
+                        df_temp['MES_NUM'] = df_temp['DATA'].dt.month
+                        df_temp['MES_NOME'] = df_temp['MES_NUM'].map(MESES_DICT)
                     else:
                         df_temp['DATA'] = pd.NaT
                         df_temp['ANO'] = None
+                        df_temp['MES_NUM'] = None
+                        df_temp['MES_NOME'] = None
                         
                     df_temp['TIPO'] = tipo_lancamento
                     df_list.append(df_temp)
@@ -256,21 +255,40 @@ if df.empty:
 if selected == "Dashboard":
     st.markdown(f"""<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">{ICONS['rocket']}<h1 style="margin: 0; font-size: 28px; font-weight: 700;">Visão Executiva</h1></div>""", unsafe_allow_html=True)
 
+    # --- ÁREA DE FILTROS ATUALIZADA ---
     with st.expander("🔍 Filtros Avançados", expanded=True):
-        c1, c2 = st.columns([1, 2])
-        anos = sorted(df['ANO'].dropna().unique())
-        sel_ano = c1.multiselect("Ano de Referência (Data Pagamento)", anos, default=anos)
-        df_f = df[df['ANO'].isin(sel_ano)] if sel_ano else df
+        c_f1, c_f2, c_f3 = st.columns([1, 1, 2])
         
-        cursos = sorted(df_f['CURSO'].unique())
-        ver_todos = c2.checkbox("Selecionar TODOS os cursos", value=True)
+        # 1. Filtro Ano
+        anos = sorted(df['ANO'].dropna().unique())
+        sel_ano = c_f1.multiselect("Ano de Referência", anos, default=anos)
+        
+        # Filtragem Intermediária (para alimentar o filtro de mês)
+        df_f_ano = df[df['ANO'].isin(sel_ano)] if sel_ano else df
+        
+        # 2. Filtro Mês (Novo) - Ordenado cronologicamente
+        # Pega os números dos meses presentes nos dados filtrados, ordena e mapeia para nomes
+        meses_disponiveis_num = sorted(df_f_ano['MES_NUM'].dropna().unique())
+        meses_disponiveis_nome = [MESES_DICT[m] for m in meses_disponiveis_num if m in MESES_DICT]
+        
+        sel_mes = c_f2.multiselect("Mês de Referência", meses_disponiveis_nome)
+        
+        # Aplica Filtro de Mês
+        if sel_mes:
+            df_f_mes = df_f_ano[df_f_ano['MES_NOME'].isin(sel_mes)]
+        else:
+            df_f_mes = df_f_ano
+            
+        # 3. Filtro Curso
+        cursos = sorted(df_f_mes['CURSO'].unique())
+        ver_todos = c_f3.checkbox("Selecionar TODOS os cursos", value=True)
         
         if ver_todos:
-            c2.markdown(f'<span style="color:{COR_SECUNDARIA}; font-weight:bold;">✅ Visualizando dados consolidados de {len(cursos)} cursos</span>', unsafe_allow_html=True)
-            df_final = df_f
+            c_f3.markdown(f'<span style="color:{COR_SECUNDARIA}; font-weight:bold;">✅ Visualizando {len(cursos)} cursos</span>', unsafe_allow_html=True)
+            df_final = df_f_mes
         else:
-            sel_curso = c2.multiselect("Selecione Cursos Específicos", cursos)
-            df_final = df_f[df_f['CURSO'].isin(sel_curso)] if sel_curso else df_f
+            sel_curso = c_f3.multiselect("Selecione Cursos Específicos", cursos)
+            df_final = df_f_mes[df_f_mes['CURSO'].isin(sel_curso)] if sel_curso else df_f_mes
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -288,7 +306,7 @@ if selected == "Dashboard":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # GRÁFICOS PRINCIPAIS
+    # GRÁFICOS
     df_chart = df_final.groupby(['CURSO', 'TIPO'])['VALOR'].sum().unstack(fill_value=0).reset_index()
     if 'RECEITA' not in df_chart.columns: df_chart['RECEITA'] = 0
     if 'DESPESA' not in df_chart.columns: df_chart['DESPESA'] = 0
@@ -296,7 +314,7 @@ if selected == "Dashboard":
     g1, g2 = st.columns([2, 1])
     
     with g1:
-        st.markdown('<h3 style="color:white; font-size:18px;">Performance Financeira</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 style="color:white; font-size:18px;">Performance Financeira (Nº Controle)</h3>', unsafe_allow_html=True)
         if not df_chart.empty:
             df_chart['VOLUME'] = df_chart['RECEITA'] + df_chart['DESPESA']
             df_perf = df_chart.sort_values('VOLUME', ascending=False).head(10)
@@ -323,7 +341,7 @@ if selected == "Dashboard":
             st.plotly_chart(fig, use_container_width=True)
 
     with g2:
-        st.markdown('<h3 style="color:white; font-size:18px;">Top Ranking</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 style="color:white; font-size:18px;">Top Ranking (Nº Controle)</h3>', unsafe_allow_html=True)
         if not df_chart.empty:
             df_rank = df_chart.sort_values('RECEITA', ascending=True).tail(10)
             df_rank['TEXTO_BRL'] = df_rank['RECEITA'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
@@ -337,12 +355,11 @@ if selected == "Dashboard":
             )
             st.plotly_chart(fig_rank, use_container_width=True)
 
-    # --- AUDITORIA DE QUALIDADE (ATUALIZADO) ---
+    # AUDITORIA
     st.markdown("---")
     with st.expander("🔍 Auditoria de Qualidade (Valores sem Controle Padronizado)", expanded=True):
         ac1, ac2 = st.columns([1, 2])
         
-        # Consolida valores
         val_unmapped_rec = audit_stats.get('unmapped_receita', 0)
         val_unmapped_desp = audit_stats.get('unmapped_despesa', 0)
         val_total_unmapped = val_unmapped_rec + val_unmapped_desp
@@ -356,7 +373,6 @@ if selected == "Dashboard":
             st.metric("Total Mapeado (Correto)", format_currency(val_mapped))
             st.metric("Total Sem Controle (Descartado)", format_currency(val_total_unmapped), 
                       delta=f"{pct_unmapped:.1f}% de perda", delta_color="inverse")
-            
             st.markdown("#### Detalhamento:")
             st.caption(f"🔴 Receitas sem Controle: {format_currency(val_unmapped_rec)}")
             st.caption(f"🔴 Despesas sem Controle: {format_currency(val_unmapped_desp)}")
@@ -367,7 +383,6 @@ if selected == "Dashboard":
                 'Categoria': ['Mapeado', 'Não Mapeado (Receita)', 'Não Mapeado (Despesa)'],
                 'Valor': [val_mapped, val_unmapped_rec, val_unmapped_desp]
             })
-            # Remove zeros para o gráfico ficar bonito
             audit_df = audit_df[audit_df['Valor'] > 0]
             
             fig_audit = px.pie(
@@ -375,8 +390,8 @@ if selected == "Dashboard":
                 color='Categoria',
                 color_discrete_map={
                     'Mapeado': COR_SECUNDARIA, 
-                    'Não Mapeado (Receita)': '#fbbf24', # Amarelo
-                    'Não Mapeado (Despesa)': COR_ALERT  # Vermelho
+                    'Não Mapeado (Receita)': '#fbbf24', 
+                    'Não Mapeado (Despesa)': COR_ALERT 
                 }
             )
             fig_audit.update_traces(textinfo='percent+label')
