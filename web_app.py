@@ -18,7 +18,7 @@ st.set_page_config(
 
 LOGO_URL = "https://i.ibb.co/xZGzw7F/ohana.png"
 
-# --- CONSTANTES DE DATA (Mapeamento de Meses) ---
+# --- CONSTANTES DE DATA ---
 MESES_DICT = {
     1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril',
     5: 'Maio', 6: 'Junho', 7: 'Julho', 8: 'Agosto',
@@ -34,6 +34,7 @@ COR_SECUNDARIA = "#2497BF"
 COR_TEXTO = "#FFFFFF"
 COR_SUBTEXTO = "#B0B8C8"
 COR_ALERT = "#ef4444"
+COR_WARN = "#f59e0b"
 
 # --- ÍCONES ---
 ICONS = {
@@ -41,7 +42,9 @@ ICONS = {
     "down": f"""<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="{COR_PRIMARIA}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>""",
     "profit": f"""<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>""",
     "chart": f"""<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="{COR_TEXTO}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>""",
-    "rocket": f"""<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="{COR_PRIMARIA}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.1 4-1 4-1"/><path d="M12 15v5s3.03-.55 4-2c1.1-1.62 1-4 1-4"/></svg>"""
+    "rocket": f"""<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="{COR_PRIMARIA}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.1 4-1 4-1"/><path d="M12 15v5s3.03-.55 4-2c1.1-1.62 1-4 1-4"/></svg>""",
+    "bank": f"""<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="{COR_SECUNDARIA}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>""",
+    "tax": f"""<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="{COR_PRIMARIA}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" x2="12" y1="18" y2="12"/><line x1="9" x2="15" y1="15" y2="15"/></svg>"""
 }
 
 # --- CSS ---
@@ -53,6 +56,20 @@ st.markdown(f"""
     section[data-testid="stSidebar"] {{ background-color: {COR_SIDEBAR}; border-right: 1px solid rgba(235, 82, 131, 0.1); }}
     .stTextInput input {{ background-color: rgba(255, 255, 255, 0.05) !important; color: white !important; border: 1px solid rgba(235, 82, 131, 0.3) !important; }}
     .stTextInput input:focus {{ border-color: {COR_PRIMARIA} !important; }}
+    
+    div.stButton > button {{
+        background-color: {COR_CARD};
+        color: {COR_TEXTO};
+        border: 1px solid {COR_PRIMARIA};
+        width: 100%;
+        transition: all 0.3s;
+    }}
+    div.stButton > button:hover {{
+        background-color: {COR_PRIMARIA};
+        color: white;
+        border-color: {COR_PRIMARIA};
+    }}
+    
     .kpi-card {{ background-color: {COR_CARD}; padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); border-left: 4px solid {COR_PRIMARIA}; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; transition: transform 0.2s; }}
     .kpi-card:hover {{ transform: translateY(-3px); border-color: {COR_SECUNDARIA}; }}
     .kpi-title {{ color: {COR_SUBTEXTO}; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }}
@@ -61,6 +78,7 @@ st.markdown(f"""
     .kpi-icon-box {{ background: rgba(255, 255, 255, 0.03); padding: 10px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }}
     .stMultiSelect {{ color: {COR_TEXTO}; }}
     div[data-testid="stDataFrame"] {{ background-color: {COR_CARD}; border-radius: 8px; }}
+    div[data-testid="stAlert"] {{ padding: 0.5rem; border-radius: 8px; }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -115,7 +133,7 @@ def check_auth():
 if not check_auth(): st.stop()
 
 # ==============================================================================
-# 3. ETL (COM MÊS E AUDITORIA)
+# 3. ETL (FILTRAGEM DE LIXO E MAPA DE DADOS)
 # ==============================================================================
 @st.cache_data(ttl=600)
 def load_data():
@@ -123,7 +141,6 @@ def load_data():
     url = f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=xlsx'
     
     logs = []
-    audit_stats = {'mapped_total': 0.0, 'unmapped_receita': 0.0, 'unmapped_despesa': 0.0}
     
     try:
         all_sheets = pd.read_excel(url, sheet_name=None, engine='openpyxl')
@@ -158,6 +175,12 @@ def load_data():
                     col_curso = next((c for c in df.columns if "CONTROLE" in c), None) or \
                                 next((c for c in df.columns if "CURSO" in c), None)
 
+                col_produto = next((c for c in df.columns if "PRODUTO" in c or "SERVIÇO" in c), None)
+                
+                col_entidade = next((c for c in df.columns if "CLIENTE" in c or "FORNECEDOR" in c or "FAVORECIDO" in c), None)
+                if not col_entidade:
+                    col_entidade = next((c for c in df.columns if "NOME" in c or "DESCRI" in c), None)
+
                 col_data = next((c for c in df.columns if 'PAGAMENTO' in c and 'DATA' in c), None) or \
                            next((c for c in df.columns if 'DATA' in c), None)
                 
@@ -173,19 +196,23 @@ def load_data():
                         .str.replace(r'\.0$', '', regex=True)
                     )
                     
-                    valores_invalidos = ['', 'NAN', 'NAT', 'NONE', 'NULL', '0', 'N/A', '-', 'nan']
-                    
-                    raw_values_clean = limpar_valor(df_subset[col_valor]).abs()
-                    mask_invalid = df_subset['TEMP_CURSO'].isin(valores_invalidos)
-                    
-                    valor_perdido = raw_values_clean[mask_invalid].sum()
-                    if tipo_lancamento == 'RECEITA':
-                        audit_stats['unmapped_receita'] += valor_perdido
+                    if col_produto:
+                        df_subset['TEMP_PRODUTO'] = df_subset[col_produto].fillna('').astype(str).str.strip().str.upper()
                     else:
-                        audit_stats['unmapped_despesa'] += valor_perdido
+                        df_subset['TEMP_PRODUTO'] = 'NÃO INFORMADO'
                         
-                    audit_stats['mapped_total'] += raw_values_clean[~mask_invalid].sum()
+                    if col_entidade:
+                        df_subset['TEMP_ENTIDADE'] = df_subset[col_entidade].fillna('').astype(str).str.strip().str.upper()
+                    else:
+                        df_subset['TEMP_ENTIDADE'] = 'NÃO INFORMADO'
+
+                    # LISTA DE EXCLUSÃO (CRÍTICO)
+                    valores_invalidos = [
+                        '', 'NAN', 'NAT', 'NONE', 'NULL', '0', 'N/A', '-', 'nan',
+                        'NÃO ENCONTRADO', 'NAO ENCONTRADO', 'NAO_ENCONTRADO'
+                    ]
                     
+                    mask_invalid = df_subset['TEMP_CURSO'].isin(valores_invalidos)
                     df_subset = df_subset[~mask_invalid]
                     
                     if df_subset.empty:
@@ -194,29 +221,36 @@ def load_data():
 
                     df_temp = pd.DataFrame()
                     df_temp['CURSO'] = df_subset['TEMP_CURSO']
+                    df_temp['PRODUTO'] = df_subset['TEMP_PRODUTO']
+                    df_temp['ENTIDADE'] = df_subset['TEMP_ENTIDADE']
                     df_temp['VALOR'] = limpar_valor(df_subset[col_valor]).abs() 
                     
                     if col_data:
                         df_temp['DATA'] = pd.to_datetime(df_subset[col_data], errors='coerce')
-                        df_temp['ANO'] = df_temp['DATA'].dt.year
-                        # --- CRIAÇÃO DA COLUNA DE MÊS ---
-                        df_temp['MES_NUM'] = df_temp['DATA'].dt.month
-                        df_temp['MES_NOME'] = df_temp['MES_NUM'].map(MESES_DICT)
                     else:
                         df_temp['DATA'] = pd.NaT
-                        df_temp['ANO'] = None
-                        df_temp['MES_NUM'] = None
-                        df_temp['MES_NOME'] = None
                         
                     df_temp['TIPO'] = tipo_lancamento
                     df_list.append(df_temp)
             
-        return (pd.concat(df_list, ignore_index=True) if df_list else pd.DataFrame()), logs, audit_stats
+        df_final = pd.concat(df_list, ignore_index=True) if df_list else pd.DataFrame()
+        
+        if not df_final.empty:
+            mapa_produtos = (
+                df_final[df_final['TIPO'] == 'RECEITA']
+                .drop_duplicates('CURSO')
+                .set_index('CURSO')['PRODUTO']
+                .to_dict()
+            )
+            mask_update = (df_final['TIPO'] == 'DESPESA')
+            df_final.loc[mask_update, 'PRODUTO'] = df_final.loc[mask_update, 'CURSO'].map(mapa_produtos).fillna('OUTROS / INDEFINIDO')
+
+        return df_final, logs
 
     except Exception as e:
-        return pd.DataFrame(), [f"Erro Crítico: {str(e)}"], {}
+        return pd.DataFrame(), [f"Erro Crítico: {str(e)}"]
 
-df, debug_logs, audit_stats = load_data()
+df, debug_logs = load_data()
 
 # ==============================================================================
 # 4. SIDEBAR
@@ -255,59 +289,106 @@ if df.empty:
 if selected == "Dashboard":
     st.markdown(f"""<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">{ICONS['rocket']}<h1 style="margin: 0; font-size: 28px; font-weight: 700;">Visão Executiva</h1></div>""", unsafe_allow_html=True)
 
-    # --- ÁREA DE FILTROS ATUALIZADA ---
-    with st.expander("🔍 Filtros Avançados", expanded=True):
-        c_f1, c_f2, c_f3 = st.columns([1, 1, 2])
+    # --- INICIALIZAÇÃO DE ESTADO ---
+    if 'show_taxas' not in st.session_state: st.session_state.show_taxas = False
+    if 'show_das' not in st.session_state: st.session_state.show_das = False
+
+    def toggle_taxas(): st.session_state.show_taxas = not st.session_state.show_taxas
+    def toggle_das(): st.session_state.show_das = not st.session_state.show_das
+
+    # --- FILTROS ---
+    with st.expander("🔍 Filtros: Produto & Controle", expanded=True):
+        c_f1, c_f2 = st.columns(2)
         
-        # 1. Filtro Ano
-        anos = sorted(df['ANO'].dropna().unique())
-        sel_ano = c_f1.multiselect("Ano de Referência", anos, default=anos)
+        produtos_unicos = sorted([p for p in df['PRODUTO'].unique() if p and str(p) != 'nan'])
+        ver_todos_prod = c_f1.checkbox("Selecionar TODOS os Produtos", value=True)
         
-        # Filtragem Intermediária (para alimentar o filtro de mês)
-        df_f_ano = df[df['ANO'].isin(sel_ano)] if sel_ano else df
-        
-        # 2. Filtro Mês (Novo) - Ordenado cronologicamente
-        # Pega os números dos meses presentes nos dados filtrados, ordena e mapeia para nomes
-        meses_disponiveis_num = sorted(df_f_ano['MES_NUM'].dropna().unique())
-        meses_disponiveis_nome = [MESES_DICT[m] for m in meses_disponiveis_num if m in MESES_DICT]
-        
-        sel_mes = c_f2.multiselect("Mês de Referência", meses_disponiveis_nome)
-        
-        # Aplica Filtro de Mês
-        if sel_mes:
-            df_f_mes = df_f_ano[df_f_ano['MES_NOME'].isin(sel_mes)]
+        if ver_todos_prod:
+            c_f1.info("✅ Todos os Produtos Selecionados")
+            df_step1 = df
         else:
-            df_f_mes = df_f_ano
-            
-        # 3. Filtro Curso
-        cursos = sorted(df_f_mes['CURSO'].unique())
-        ver_todos = c_f3.checkbox("Selecionar TODOS os cursos", value=True)
+            sel_produto = c_f1.multiselect("Selecione Produtos", produtos_unicos)
+            if not sel_produto:
+                c_f1.warning("⚠️ Selecione pelo menos um produto")
+                df_step1 = df[df['PRODUTO'].isin([])]
+            else:
+                df_step1 = df[df['PRODUTO'].isin(sel_produto)]
         
-        if ver_todos:
-            c_f3.markdown(f'<span style="color:{COR_SECUNDARIA}; font-weight:bold;">✅ Visualizando {len(cursos)} cursos</span>', unsafe_allow_html=True)
-            df_final = df_f_mes
+        controles_unicos = sorted(df_step1['CURSO'].unique())
+        ver_todos_controle = c_f2.checkbox("Selecionar TODOS os Controles", value=True)
+        
+        if ver_todos_controle:
+            c_f2.info("✅ Todos os Controles Selecionados")
+            df_final = df_step1
         else:
-            sel_curso = c_f3.multiselect("Selecione Cursos Específicos", cursos)
-            df_final = df_f_mes[df_f_mes['CURSO'].isin(sel_curso)] if sel_curso else df_f_mes
+            sel_controle = c_f2.multiselect("Selecione Nº Controle", controles_unicos)
+            if not sel_controle:
+                c_f2.warning("⚠️ Selecione pelo menos um controle")
+                df_final = df_step1[df_step1['CURSO'].isin([])]
+            else:
+                df_final = df_step1[df_step1['CURSO'].isin(sel_controle)]
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # KPIS
+    # --- CÁLCULOS KPI ---
+    cursos_validos_receita = df[df['TIPO'] == 'RECEITA']['CURSO'].unique()
+    
     receita = df_final[df_final['TIPO'] == 'RECEITA']['VALOR'].sum()
-    despesa = df_final[df_final['TIPO'] == 'DESPESA']['VALOR'].sum()
-    lucro = receita - despesa
-    margem = (lucro / receita * 100) if receita > 0 else 0
+    
+    df_despesas_validas = df_final[
+        (df_final['TIPO'] == 'DESPESA') & 
+        (df_final['CURSO'].isin(cursos_validos_receita))
+    ]
+    despesa = df_despesas_validas['VALOR'].sum()
+    
+    lucro = receita - despesa # Margem Bruta
+    
+    val_taxas_total = receita * 0.0233
+    val_das_total = receita * 0.0989
+    margem_contribuicao = lucro - val_taxas_total - val_das_total
+    
+    margem = (margem_contribuicao / receita * 100) if receita > 0 else 0
 
-    k1, k2, k3, k4 = st.columns(4)
-    with k1: st.markdown(kpi_html("Receita Total", format_currency(receita), "Entradas (Vinc.)", ICONS['money']), unsafe_allow_html=True)
-    with k2: st.markdown(kpi_html("Despesas", format_currency(despesa), "Saídas (Vinc.)", ICONS['down']), unsafe_allow_html=True)
-    with k3: st.markdown(kpi_html("Lucro Líquido", format_currency(lucro), "Resultado", ICONS['profit']), unsafe_allow_html=True)
-    with k4: st.markdown(kpi_html("Margem", f"{margem:.1f}%", "ROI", ICONS['chart']), unsafe_allow_html=True)
+    # --- EXIBIÇÃO DE KPIS ---
+    k1, k2, k3, k4, k5 = st.columns(5)
+    with k1: st.markdown(kpi_html("Receita de Vendas", format_currency(receita), "Entradas (Vinc.)", ICONS['money']), unsafe_allow_html=True)
+    with k2: st.markdown(kpi_html("Despesas de Vendas", format_currency(despesa), "Saídas (Validadas)", ICONS['down']), unsafe_allow_html=True)
+    with k3: st.markdown(kpi_html("Margem Bruta", format_currency(lucro), "Resultado", ICONS['profit']), unsafe_allow_html=True)
+    with k4: st.markdown(kpi_html("Margem Contribuição", format_currency(margem_contribuicao), "Margem bruta - Taxas - DAS", ICONS['bank']), unsafe_allow_html=True)
+    with k5: st.markdown(kpi_html("Margem %", f"{margem:.1f}%", "ROI Líquido", ICONS['chart']), unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # GRÁFICOS
-    df_chart = df_final.groupby(['CURSO', 'TIPO'])['VALOR'].sum().unstack(fill_value=0).reset_index()
+    # --- BOTÕES E KPIS DINÂMICOS ---
+    btn_col1, btn_col2, _ = st.columns([1, 1, 2])
+    
+    label_taxas = "🔽 Ocultar Taxas" if st.session_state.show_taxas else "▶ Taxas bancárias (média)"
+    label_das = "🔽 Ocultar DAS" if st.session_state.show_das else "▶ DAS Real"
+    
+    btn_col1.button(label_taxas, on_click=toggle_taxas, use_container_width=True)
+    btn_col2.button(label_das, on_click=toggle_das, use_container_width=True)
+    
+    if st.session_state.show_taxas or st.session_state.show_das:
+        ext_kpi_cols = st.columns(4)
+        idx = 0
+        
+        if st.session_state.show_taxas:
+            with ext_kpi_cols[idx]:
+                st.markdown(kpi_html("Taxas bancárias (média)", format_currency(val_taxas_total), "2,33% da Receita", ICONS['bank']), unsafe_allow_html=True)
+            idx += 1
+            
+        if st.session_state.show_das:
+            with ext_kpi_cols[idx]:
+                st.markdown(kpi_html("DAS Real", format_currency(val_das_total), "9,89% da Receita", ICONS['tax']), unsafe_allow_html=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+
+    # --- GRÁFICOS ---
+    df_g_receita = df_final[df_final['TIPO'] == 'RECEITA']
+    df_g_despesa = df_despesas_validas
+    df_grafico = pd.concat([df_g_receita, df_g_despesa])
+    
+    df_chart = df_grafico.groupby(['CURSO', 'TIPO'])['VALOR'].sum().unstack(fill_value=0).reset_index()
     if 'RECEITA' not in df_chart.columns: df_chart['RECEITA'] = 0
     if 'DESPESA' not in df_chart.columns: df_chart['DESPESA'] = 0
 
@@ -355,54 +436,19 @@ if selected == "Dashboard":
             )
             st.plotly_chart(fig_rank, use_container_width=True)
 
-    # AUDITORIA
-    st.markdown("---")
-    with st.expander("🔍 Auditoria de Qualidade (Valores sem Controle Padronizado)", expanded=True):
-        ac1, ac2 = st.columns([1, 2])
-        
-        val_unmapped_rec = audit_stats.get('unmapped_receita', 0)
-        val_unmapped_desp = audit_stats.get('unmapped_despesa', 0)
-        val_total_unmapped = val_unmapped_rec + val_unmapped_desp
-        val_mapped = audit_stats.get('mapped_total', 0)
-        
-        vol_total = val_mapped + val_total_unmapped
-        pct_unmapped = (val_total_unmapped / vol_total * 100) if vol_total > 0 else 0
-        
-        with ac1:
-            st.markdown("### Resumo de Perdas")
-            st.metric("Total Mapeado (Correto)", format_currency(val_mapped))
-            st.metric("Total Sem Controle (Descartado)", format_currency(val_total_unmapped), 
-                      delta=f"{pct_unmapped:.1f}% de perda", delta_color="inverse")
-            st.markdown("#### Detalhamento:")
-            st.caption(f"🔴 Receitas sem Controle: {format_currency(val_unmapped_rec)}")
-            st.caption(f"🔴 Despesas sem Controle: {format_currency(val_unmapped_desp)}")
-            
-        with ac2:
-            st.markdown("### Distribuição da Qualidade de Dados")
-            audit_df = pd.DataFrame({
-                'Categoria': ['Mapeado', 'Não Mapeado (Receita)', 'Não Mapeado (Despesa)'],
-                'Valor': [val_mapped, val_unmapped_rec, val_unmapped_desp]
-            })
-            audit_df = audit_df[audit_df['Valor'] > 0]
-            
-            fig_audit = px.pie(
-                audit_df, values='Valor', names='Categoria', hole=0.5,
-                color='Categoria',
-                color_discrete_map={
-                    'Mapeado': COR_SECUNDARIA, 
-                    'Não Mapeado (Receita)': '#fbbf24', 
-                    'Não Mapeado (Despesa)': COR_ALERT 
-                }
-            )
-            fig_audit.update_traces(textinfo='percent+label')
-            fig_audit.update_layout(height=350, paper_bgcolor='rgba(0,0,0,0)', font=dict(color=COR_SUBTEXTO))
-            st.plotly_chart(fig_audit, use_container_width=True)
-
     with st.expander("Visualizar Dados Detalhados"):
         st.dataframe(
-            df_final[['DATA', 'CURSO', 'TIPO', 'VALOR']]
+            df_final[['DATA', 'CURSO', 'TIPO', 'VALOR', 'ENTIDADE', 'PRODUTO']]
             .sort_values(['DATA', 'TIPO'], ascending=[False, True])
-            .style.format({'VALOR': format_currency}),
+            .rename(columns={
+                'DATA': 'Data',
+                'CURSO': 'Nº Controle',
+                'TIPO': 'Tipo',
+                'VALOR': 'Valor',
+                'ENTIDADE': 'Cliente/Fornecedor',
+                'PRODUTO': 'Conta/Serviço'
+            })
+            .style.format({'Valor': format_currency}),
             use_container_width=True, height=300
         )
 
